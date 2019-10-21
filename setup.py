@@ -1,9 +1,9 @@
 from distutils.core import setup
 
 setup(
-        name='beancount-hoostus-prices',
-        version='2.0',
-        packages=['hoostus_sources'],
+        name='beancount-wtd-prices',
+        version='2.1',
+        packages=['v_sources'],
         license='BSD',
         long_description=open('README.md').read(),
 )
