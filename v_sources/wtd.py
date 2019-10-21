@@ -12,13 +12,14 @@ import requests
 from beancount.core.number import D
 from beancount.prices import source
 from beancount.utils import net_utils
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
+
 
 """
 bean-price --no-cache -e 'USD:v_sources.wtd/VTSAX'
 """
 
-timezone = pytz.timezone('America/New_York')
+current_tz = datetime.now(timezone.utc).astimezone().tzinfo
 
 class Source(source.Source):
     "World Trading Data API price extractor."
@@ -40,8 +41,8 @@ class Source(source.Source):
             '&date_to={}'.format(
             ticker,
             os.environ['BEANCOUNT_WTD_API_TOKEN'],
-            date_from,
-            date_to,
+            date_from.date(),
+            date_to.date(),
         )
 
 
@@ -58,7 +59,7 @@ class Source(source.Source):
 
         for hist_date, price_data in response['history'].items():
             # im not sure how to make this work with other currencies
-            hist_date_parsed = timezone.localize(datetime.strptime(hist_date, '%Y-%m-%d'))
+            hist_date_parsed = datetime.strptime(hist_date, '%Y-%m-%d').replace(tzinfo=current_tz)
             return source.SourcePrice(D(price_data['close']), hist_date_parsed, 'USD')
 
         logging.error("Error retrieving stock info response=%s", response)
