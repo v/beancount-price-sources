@@ -27,11 +27,14 @@ class Source(source.Source):
     def get_latest_price(self, ticker):
         return self.get_historical_price(ticker, date.today())
 
-    def get_historical_price(self, ticker, date):
+    def get_historical_price(self, ticker, dt):
         """See contract in beancount.prices.source.Source."""
 
-        date_from = date - timedelta(days=5)
-        date_to = date
+        if isinstance(dt, datetime):
+            dt = dt.date()
+
+        date_from = dt - timedelta(days=5)
+        date_to = dt
 
 
         url = 'https://api.worldtradingdata.com/api/v1/history' \
@@ -41,8 +44,8 @@ class Source(source.Source):
             '&date_to={}'.format(
             ticker,
             os.environ['BEANCOUNT_WTD_API_TOKEN'],
-            date_from.date(),
-            date_to.date(),
+            date_from,
+            date_to,
         )
 
 
