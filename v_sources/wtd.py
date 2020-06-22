@@ -37,17 +37,10 @@ class Source(source.Source):
         date_to = dt
 
 
-        url = 'https://api.worldtradingdata.com/api/v1/history' \
-            '?symbol={}' \
-            '&api_token={}' \
-            '&date_from={}' \
-            '&date_to={}'.format(
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={}&apikey={}".format(
             ticker,
-            os.environ['BEANCOUNT_WTD_API_TOKEN'],
-            date_from,
-            date_to,
+            os.environ['ALPHA_VANTAGE_KEY']
         )
-
 
         logging.info("Fetching %s", url)
 
@@ -56,14 +49,18 @@ class Source(source.Source):
 
         response = r.json()
 
-        if 'history' not in response or not response['history']:
-            logging.error('No history found: response=%s', response)
-            return None
+        key = 'Time Series (Daily)'
 
-        for hist_date, price_data in response['history'].items():
-            # im not sure how to make this work with other currencies
-            hist_date_parsed = datetime.strptime(hist_date, '%Y-%m-%d').replace(tzinfo=current_tz)
-            return source.SourcePrice(D(price_data['close']), hist_date_parsed, 'USD')
+        curr_date = date_to
+
+        while curr_date > date_from:
+            price_by_date = response[key]
+            if str(curr_date) not in price_by_date:
+                curr_date = curr_date - timedelta(days=1)
+                continue
+            price_data = price_by_date[str(curr_date)]
+            curr_date_parsed = datetime.strptime(str(curr_date), '%Y-%m-%d').replace(tzinfo=current_tz)
+            return source.SourcePrice(D(price_data['4. close']), curr_date_parsed, 'USD')
 
         logging.error("Error retrieving stock info response=%s", response)
         return None
